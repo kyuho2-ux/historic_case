@@ -152,4 +152,4 @@
 ## 8. 도구와 첫 샘플
 
 - **검사기:** `python3 scripts/check_manuscript.py manuscript/<꼭지 폴더>` — 각주 정의, 원장 상태, 미해결 표시 `⟦…⟧`, 숫자 문단의 각주 누락, 분량을 검사하고 발행 불가 사유를 낸다. 규칙은 [manuscript/README.md](../manuscript/README.md).
-- **첫 샘플:** [manuscript/ch01-hanoi-toshiba/](../manuscript/ch01-hanoi-toshiba/) (하노이 쥐 사냥 × 도시바). 초고 v1은 도시바 조사보고서 원문과 Vann 본인 인터뷰를 직접 열람해 썼고, 검사기의 발행 불가 사유가 41건(v0)에서 3건으로 줄었다. 자체 점검표는 예 6 / 부분 3 / 보류 1로 기준(8/10) 미달이며, 분량도 목표에 못 미친다. 상세는 그 폴더의 `design.md`.
+- **첫 샘플:** [manuscript/ch01-hanoi-toshiba/](../manuscript/ch01-hanoi-toshiba/) (하노이 쥐 사냥 × 도시바). 초고 v2는 도시바 조사보고서 원문(일본어)과 Vann 본인 발언 자료를 직접 열람해 썼고, 검사기의 발행 불가 사유가 41건(v0)에서 1건(이규호 코멘트 미작성)으로 줄었다. 자체 점검표는 예 6 / 부분 2 / 아니오 1 / 보류 1로 기준(8/10) 미달이다. 상세는 그 폴더의 `design.md`.
