@@ -33,6 +33,7 @@
 | [08. AI 자동화 제작 파이프라인](docs/08-ai-production.md) | 자동화 흐름, 사람이 지키는 관문 3개, 아바타 운영 원칙 |
 | [09. 화자 프로필 & 창업자 코멘트 소재](docs/09-host-profile.md) | 이력서 기반 프로필, 편별 코멘트 소재, 강연 소개서 표현 주의 |
 | [10. 책 수준 품질 기준](docs/10-book-quality.md) | 재미(완독) 설계 장치 6가지, 재미 검증 방법, 정합성·출처 게이트 |
+| [manuscript/](manuscript/README.md) · [scripts/check_manuscript.py](scripts/check_manuscript.py) | 마스터 원고(꼭지별 설계도·초고·출처 원장)와 정합성·출처 검사기 |
 | [data/candidates.csv](data/candidates.csv) · [data/ranking.md](data/ranking.md) · [scripts/score_topics.py](scripts/score_topics.py) | 후보 점수 데이터, 등급 결과, 계산 스크립트 |
 | [템플릿: 에피소드 기획서](templates/episode-template.md) | 에피소드 1편을 기획할 때 채우는 양식 |
 
