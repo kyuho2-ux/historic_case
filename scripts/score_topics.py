@@ -1,57 +1,46 @@
-"""소재 후보(data/candidates.csv)를 점수화해 우선순위 표를 출력한다.
+"""소재 후보(data/candidates.csv)를 점수화해 등급별 우선순위를 출력한다.
 
 사용법:
-    python3 scripts/score_topics.py            # 마크다운 표 출력
-    python3 scripts/score_topics.py > out.md   # 파일로 저장
+    python3 scripts/score_topics.py > data/ranking.md
 
-점수 로직은 docs/06-topic-selection.md 참고.
+점수 로직(v2)은 docs/06-topic-selection.md 참고.
 """
 
 import csv
 import sys
 from pathlib import Path
 
-# 기본 점수 70점: 한국인 공감도와 스토리 품질
-CORE_WEIGHTS = {
-    "K": 20,  # 한국인 인지도
-    "D": 15,  # 결정의 선명도
+# 합계 100점. 각 항목은 0~5점으로 매기고 (점수 ÷ 5 × 가중치)로 환산한다.
+WEIGHTS = {
+    "K": 15,  # 한국인 인지도
+    "D": 10,  # 결정의 선명도
     "F": 15,  # 운명의 낙차
     "T": 10,  # 반전·의외성
+    "N": 15,  # 신선도 (기존 콘텐츠 대비 새로운 각도)
+    "P": 10,  # 겹쳐 보기 적합도 (역사 사건과 짝이 되는가)
+    "C": 5,   # 현재성 (지금 뉴스·주가와 연결되는가)
     "V": 10,  # 검증 가능성
+    "S": 10,  # 화자 적합도 (이규호만의 관점·자료)
 }
-# 타깃 가산점 30점: 네 독자층 각 7.5점
-TARGET_WEIGHTS = {
-    "CEO": 7.5,  # 경영자
-    "MGR": 7.5,  # 중간 관리자
-    "STU": 7.5,  # 학생
-    "INV": 7.5,  # 주식 투자자
-}
-TARGET_LABELS = {"CEO": "경영자", "MGR": "관리자", "STU": "학생", "INV": "투자자"}
+
+GRADES = [("S", 82), ("A", 75), ("B", 68), ("C", 0)]
 
 
 def score(row):
-    core = sum(int(row[k]) / 5 * w for k, w in CORE_WEIGHTS.items())
-    target = sum(int(row[k]) / 5 * w for k, w in TARGET_WEIGHTS.items())
-    return core, target, core + target + int(row["risk"])
+    return sum(int(row[k]) / 5 * w for k, w in WEIGHTS.items()) + int(row["risk"])
 
 
 def gate(row):
     """통과하지 못하면 점수와 무관하게 보류한다."""
     if int(row["V"]) <= 2:
-        return "보류: 검증 자료 부족"
+        return "검증 자료 부족"
     if int(row["D"]) <= 2:
-        return "보류: 결정의 순간이 불분명"
+        return "결정의 순간이 불분명"
     return ""
 
 
 def grade(total):
-    if total >= 88:
-        return "S"
-    if total >= 83:
-        return "A"
-    if total >= 75:
-        return "B"
-    return "C"
+    return next(g for g, cut in GRADES if total >= cut)
 
 
 def main():
@@ -60,30 +49,31 @@ def main():
         rows = list(csv.DictReader(f))
 
     for row in rows:
-        row["core"], row["target"], row["total"] = score(row)
+        row["total"] = score(row)
         row["gate"] = gate(row)
-        top = [TARGET_LABELS[k] for k in TARGET_WEIGHTS if int(row[k]) >= 5]
-        row["top"] = ", ".join(top) or "-"
 
-    # 동점이면 한국인 인지도 → 한국 소재 → 투자자 가산 순으로 앞선다
-    passed = sorted(
-        (r for r in rows if not r["gate"]),
-        key=lambda r: (-r["total"], -int(r["K"]), r["region"] != "한국", -int(r["INV"])),
-    )
+    passed = sorted((r for r in rows if not r["gate"]), key=lambda r: -r["total"])
     held = [r for r in rows if r["gate"]]
 
     out = sys.stdout
-    out.write("| 순위 | 등급 | ID | 소재 | 기업 | 연도 | 기본(70) | 가산(30) | 리스크 | 총점 | 최고 반응 타깃 |\n")
-    out.write("|---|---|---|---|---|---|---|---|---|---|---|\n")
-    for i, r in enumerate(passed, 1):
-        out.write(
-            f"| {i} | {grade(r['total'])} | {r['id']} | {r['title']} | {r['company']} | {r['year']} "
-            f"| {r['core']:.0f} | {r['target']:.1f} | {r['risk']} | **{r['total']:.1f}** | {r['top']} |\n"
-        )
+    # 점수 차이 몇 점은 의미가 없으므로 순위 대신 등급으로 묶어서 보여준다.
+    for g, cut in GRADES:
+        group = [r for r in passed if grade(r["total"]) == g]
+        if not group:
+            continue
+        label = f"{cut}점 이상" if cut else "68점 미만"
+        out.write(f"\n### {g}등급 ({label})\n\n")
+        out.write("| ID | 소재 | 기업 | 역사 짝 | 연도 | 신선도 | 겹쳐 보기 | 화자 | 점수 |\n")
+        out.write("|---|---|---|---|---|---|---|---|---|\n")
+        for r in group:
+            out.write(
+                f"| {r['id']} | {r['title']} | {r['corporate']} | {r['history']} | {r['years']} "
+                f"| {r['N']} | {r['P']} | {r['S']} | {r['total']:.0f} |\n"
+            )
     if held:
-        out.write("\n**보류 소재**\n\n")
+        out.write("\n### 보류\n\n")
         for r in held:
-            out.write(f"- {r['id']} {r['title']} ({r['company']}) — {r['gate']}, 참고 점수 {r['total']:.1f}\n")
+            out.write(f"- {r['id']} {r['title']} ({r['corporate']}) — {r['gate']}, 참고 점수 {r['total']:.0f}\n")
 
 
 if __name__ == "__main__":
